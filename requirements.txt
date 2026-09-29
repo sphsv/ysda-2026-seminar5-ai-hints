@@ -1,0 +1,15 @@
+numpy
+pandas
+matplotlib
+plotly
+Pillow
+requests
+playwright
+torch
+torchvision
+transformers==4.57.1
+huggingface_hub>=0.34,<1
+accelerate
+nbformat
+nbconvert
+ipython

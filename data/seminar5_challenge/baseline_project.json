@@ -1,0 +1,81 @@
+{
+  "public_name": "Найдите интернет-цену товара",
+  "public_description": "Откройте карточку товара и укажите цену одной продаваемой единицы по инструкции.",
+  "public_instructions": "<h2>Какую цену указать</h2><p>Найдите интернет-цену основного выбранного товара для физического лица,<br />покупающего одну продаваемую единицу. Если товар продаётся упаковкой, нужна цена<br />упаковки, а не пересчёт на квадратный метр или штуку внутри неё. Сохраняйте выбранный<br />по умолчанию вариант и состав товара. Не добавляйте комплект или дополнительные услуги.<br />Не учитывайте карту лояльности, регистрацию, оптовые скидки, промокоды, скидки<br />в корзине и специальные способы оплаты. Общедоступная скидка, уже включённая<br />в показанную цену без таких условий, учитывается. Нужна полная стоимость,<br />не платёж рассрочки. Не включайте доставку, кешбэк и цены рекомендаций.<br />Отсутствие товара на складе не означает отсутствия цены.<br />Если цена не указана, выберите «Цены нет». Если страница не открывается или<br />условия неоднозначны, выберите «Не удалось определить», не угадывайте.</p><p>Если показана AI-подсказка, она может ошибаться; отвечайте по инструкции. Покупать товар, регистрироваться и вводить персональные данные не нужно.</p>",
+  "task_spec": {
+    "input_spec": {
+      "sample_id": {
+        "type": "string",
+        "required": true,
+        "hidden": true
+      },
+      "source_url": {
+        "type": "url",
+        "required": true,
+        "hidden": false
+      }
+    },
+    "output_spec": {
+      "price": {
+        "type": "float",
+        "required": false,
+        "hidden": false
+      },
+      "reason": {
+        "type": "string",
+        "required": false,
+        "hidden": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "hidden": false,
+        "allowed_values": [
+          "ok",
+          "no_price",
+          "unavailable",
+          "ambiguous"
+        ]
+      },
+      "source_clicked": {
+        "type": "boolean",
+        "required": false,
+        "hidden": false
+      }
+    },
+    "view_spec": {
+      "type": "tb",
+      "settings": {
+        "showSubmit": true,
+        "showSkip": true,
+        "showFinish": true,
+        "showTimer": true,
+        "showInstructions": true
+      },
+      "config": "{\"view\": {\"type\": \"view.list\", \"items\": [{\"type\": \"view.action-button\", \"label\": \"Открыть источник\", \"action\": {\"type\": \"action.bulk\", \"payload\": [{\"type\": \"action.set\", \"data\": {\"type\": \"data.output\", \"path\": \"source_clicked\", \"default\": false}, \"payload\": true}, {\"type\": \"action.open-link\", \"payload\": {\"type\": \"data.input\", \"path\": \"source_url\"}}]}}, {\"type\": \"field.radio-group\", \"data\": {\"type\": \"data.output\", \"path\": \"status\"}, \"validation\": {\"type\": \"condition.required\"}, \"options\": [{\"value\": \"ok\", \"label\": \"Цена определена\"}, {\"value\": \"no_price\", \"label\": \"Страница открылась, но цены нет\"}, {\"value\": \"unavailable\", \"label\": \"Сайт не открылся / ограничил доступ\"}, {\"value\": \"ambiguous\", \"label\": \"Не удалось разобраться в цене или условиях\"}]}, {\"type\": \"helper.if\", \"condition\": {\"type\": \"condition.equals\", \"data\": {\"type\": \"data.output\", \"path\": \"status\"}, \"to\": \"ok\"}, \"then\": {\"type\": \"field.number\", \"label\": \"Цена в рублях\", \"data\": {\"type\": \"data.output\", \"path\": \"price\"}, \"minimum\": 0.01, \"validation\": {\"type\": \"condition.required\"}}}, {\"type\": \"helper.if\", \"condition\": {\"type\": \"condition.not\", \"condition\": {\"type\": \"condition.equals\", \"data\": {\"type\": \"data.output\", \"path\": \"status\"}, \"to\": \"ok\"}}, \"then\": {\"type\": \"field.textarea\", \"label\": \"Коротко поясните причину\", \"data\": {\"type\": \"data.output\", \"path\": \"reason\"}, \"validation\": {\"type\": \"condition.required\"}}}, {\"type\": \"view.text\", \"content\": \"Укажите цену с копейками, если они есть. Покупать товар и регистрироваться не нужно.\"}]}, \"plugins\": [{\"type\": \"plugin.toloka\", \"layout\": {\"kind\": \"scroll\", \"taskWidth\": 650}}]}",
+      "inputExample": null,
+      "lock": {
+        "core": "1.7.0",
+        "helper.if": "1.0.0",
+        "view.link": "1.0.0",
+        "view.list": "1.0.5",
+        "view.text": "1.0.0",
+        "action.set": "1.0.0",
+        "action.bulk": "1.0.0",
+        "field.number": "1.0.0",
+        "condition.not": "1.0.0",
+        "plugin.toloka": "1.1.8",
+        "field.textarea": "1.0.0",
+        "action.open-link": "1.0.0",
+        "condition.equals": "1.0.0",
+        "field.radio-group": "1.1.10",
+        "condition.required": "1.1.5",
+        "view.action-button": "1.0.0"
+      },
+      "localizationConfig": null,
+      "inferDataSpec": false
+    }
+  },
+  "assignments_issuing_type": "AUTOMATED",
+  "assignments_automerge_enabled": false
+}

@@ -1,0 +1,15 @@
+{
+  "experiment": "controlled_challenge_100",
+  "complete": true,
+  "n_cards": 100,
+  "hint_correct": 67,
+  "hint_wrong": 33,
+  "gold_review": "Assistant screenshot audit, not independent human gold",
+  "synthetic_responses": false,
+  "manual_hint_intervention": true,
+  "exported_at": "2026-09-27T16:31:38.339396+00:00",
+  "answer_counts": {
+    "baseline": 300,
+    "assisted": 300
+  }
+}
