@@ -13,3 +13,4 @@ accelerate
 nbformat
 nbconvert
 ipython
+jupyterlab

@@ -1,82 +1,89 @@
-# ШАД · 2026 · Семинар 5: AI-подсказки в разметке данных
+# ШАД · Семинар 5: AI-подсказки в разметке
 
-Когда подсказка помогает человеку, а когда делает ошибку убедительнее?
-На примере поиска цены на сайте: URL → скриншот → VLM → подсказка → разметка → анализ.
+## Где что лежит
 
-- [Студенческий ноутбук](seminar5_workbook.ipynb)
-- [Ноутбук с решениями](seminar5_workbook_solutions.ipynb)
+- `seminar5_workbook.ipynb` — семинарный ноутбук с заданиями.
+- `data/seminar5_challenge/cards.csv` — 100 карточек, gold и цены подсказок.
+- `data/seminar5_challenge/baseline_project.json` — проект без подсказки.
+- `data/seminar5_challenge/assisted_project.json` — проект с AI-подсказкой.
+- `data/seminar5_challenge/instruction.html` — инструкция исполнителям.
+- `src/workbook_support.py` — API-клиент Яндекс Заданий с журналом запросов.
+- `src/home_experiment.py` — создание двух закрытых пулов и их отдельный запуск.
+- `requirements.txt` — зависимости.
 
-## Открыть в Colab
-
-[Студенческая версия](https://colab.research.google.com/github/sphsv/ysda-2026-seminar5-ai-hints/blob/main/seminar5_workbook.ipynb) ·
-[Версия с решениями](https://colab.research.google.com/github/sphsv/ysda-2026-seminar5-ai-hints/blob/main/seminar5_workbook_solutions.ipynb)
-
-В открытом ноутбуке добавьте в начало ячейку подготовки файлов:
-
-```python
-%cd /content
-!git clone --depth 1 https://github.com/sphsv/ysda-2026-seminar5-ai-hints.git
-%cd /content/ysda-2026-seminar5-ai-hints
-%pip install -r requirements.txt
-!playwright install --with-deps chromium
-```
-
-Подготовку запускайте один раз на новую среду Colab. Для VLM включите GPU.
-Модель Qwen2.5-VL-3B скачивается из Hugging Face при первом запуске; CPU тоже поддерживается, но медленнее.
-
-## Локальный запуск
+## Локальный запуск ноутбука
 
 ```bash
 git clone https://github.com/sphsv/ysda-2026-seminar5-ai-hints.git
 cd ysda-2026-seminar5-ai-hints
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-playwright install chromium
+python -m playwright install chromium
+jupyter lab seminar5_workbook.ipynb
 ```
 
-Откройте ноутбук в VS Code/Jupyter и выберите созданное окружение.
-Рабочая директория — корень этого репозитория. На Linux для браузера могут понадобиться
-системные зависимости: `playwright install --with-deps chromium`.
+## Как повторить разметку через API
 
-## Что внутри
+Запускайте код из корня репозитория. Сначала создайте два непересекающихся набора исполнителей и задайте им значения `0` и `1` одного скрытого навыка.
 
-1. Инструкция поиска цены, скриншот страницы, V1 и пример интерфейса.
-2. Готовая выгрузка человеческого эксперимента: помощь и вред, большинство голосов, время.
-3. Онлайн-запуск V1/V2 на golden set, разбор ошибок и изменение промпта.
-4. Дополнительные практики: относительная ошибка, интерактивный допуск, α Криппендорфа.
+```python
+from datetime import datetime, timezone, timedelta
+from getpass import getpass
+from pathlib import Path
+import json
+import pandas as pd
 
-В студенческой версии восемь ячеек с `# YOUR CODE HERE`; тексты и код графиков совпадают с версией решений.
-Графики рассчитываются из переменных практик. Сохранённые результаты анализа людей доступны
-в версии с решениями; модельные результаты нужно получить текущим запуском, они не подменяются старыми.
+from src.workbook_support import TasksAPI
+from src.home_experiment import stage_pair, request_launch
 
-## Данные
+bundle = Path("data/seminar5_challenge")
+cards = pd.read_csv(bundle / "cards.csv", dtype={"sample_id": str})
+cards["hint"] = cards["hint_price"].map(lambda price: f"Цена товара — {price:,.2f} ₽")
 
-В `data/seminar5_challenge/` — 100 карточек и 600 ответов двух непересекающихся групп исполнителей.
-ID исполнителей и ответов заменены учебными псевдонимами. Скриншоты лежат по относительным путям
-из `cards.csv`: они нужны для оценки на том же состоянии страниц. Свежий сайт может отличаться.
+baseline_rows = cards[["sample_id", "source_url"]].to_dict("records")
+assisted_rows = cards[["sample_id", "source_url", "hint"]].to_dict("records")
+baseline_project = json.loads((bundle / "baseline_project.json").read_text())
+assisted_project = json.loads((bundle / "assisted_project.json").read_text())
 
-Подсказки подготовлены для контролируемого учебного исследования: 67 правильных и 33 неправильных.
-Это не естественная частота ошибок VLM; происхождение подсказок сохранено в `hint_origin`.
-Gold проверялся по скриншотам ассистентом и не является независимой экспертной разметкой.
-Ответы людей реальные, не синтетические. Не переносите выводы на другие сайты без проверки.
+cohort_skill_id = "YOUR_COHORT_SKILL_ID"
+cohort_filters = {
+    "baseline": {"and": [{"category": "skill", "key": cohort_skill_id,
+                            "operator": "EQ", "value": "0"}]},
+    "assisted": {"and": [{"category": "skill", "key": cohort_skill_id,
+                            "operator": "EQ", "value": "1"}]},
+}
 
-Скриншоты содержат материалы сторонних магазинов; права на них принадлежат соответствующим владельцам.
-Наличие в учебном наборе не означает свободной лицензии на их дальнейшее использование.
+budget_rub = 780.0
+pool_settings = {
+    "private_name": "seminar5_reproduction",
+    "may_contain_adult_content": False,
+    "will_expire": (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%S"),
+    "reward_per_assignment": 1.0,
+    "assignment_max_duration_seconds": 600,
+    "auto_accept_solutions": True,
+    "mixer_config": {"real_tasks_count": 1, "golden_tasks_count": 0, "training_tasks_count": 0},
+}
 
-## Самостоятельный запуск в Яндекс Заданиях
+api = TasksAPI(
+    getpass("OAuth-токен Яндекс Заданий: ").strip(),
+    Path("data/home_runs/api_journal.json"),
+    allow_write=True,
+)
 
-Нужны свой аккаунт, токен и баланс. Полные конфигурации и UI:
-`data/seminar5_challenge/baseline_project.json`, `assisted_project.json`, `instruction.html`.
-В разделе «Добавляем подсказку» есть `launch_assisted_pool` со всеми основными настройками
-и передачей `hint` в `input_values`. Её вызов закомментирован: обычное выполнение ноутбука
-не создаёт платных заданий. Проверьте фильтры аудитории, текущую комиссию и смету до подтверждения запуска.
-Для A/B организуйте непересекающиеся группы. Модерация может занять непредсказуемое время.
-Токены не сохраняйте в ноутбуках и не отправляйте в репозиторий.
+result = stage_pair(
+    api, baseline_project, assisted_project, pool_settings,
+    baseline_rows, assisted_rows, cohort_filters,
+    overlap=3, budget_rub=budget_rub, commission=0.30,
+)
+print(result)
+```
 
-## Файлы
+`stage_pair` создает проекты, задания и два **закрытых** пула. После проверки интерфейса, фильтров, оплаты и модерации каждый пул запускается отдельно:
 
-`src/` — модель, API и расчёты; `assets/` — изображение интерфейса;
-`requirements.txt` — зависимости. Веса модели, журналы аккаунта, архивы и промежуточные прогоны не включены.
-При редактировании решения — основной ноутбук; `python tools/sync_student.py` переносит изменения
-в студенческую версию и оставляет пропуски в практиках.
+```python
+request_launch(api, result["pools"]["baseline"], budget_rub)
+request_launch(api, result["pools"]["assisted"], budget_rub)
+```
+
+Запуск платный. Не коммитьте OAuth-токен и `data/home_runs/api_journal.json`.
