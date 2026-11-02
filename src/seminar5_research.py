@@ -31,7 +31,7 @@ def load_snapshot(folder):
 
 
 def score(answers,cards):
-    required=['sample_id','reference_price','hint_price','hint_origin','trap_type']
+    required=['sample_id','reference_price','hint_price','trap_type']
     if cards.sample_id.duplicated().any():raise ValueError('Повтор эталона')
     if answers.response_id.duplicated().any():raise ValueError('Повтор ответа')
     if set(answers.condition)!=set(ARMS):raise ValueError('Нужны обе группы')
